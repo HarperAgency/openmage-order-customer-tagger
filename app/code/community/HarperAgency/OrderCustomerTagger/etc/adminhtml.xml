@@ -6,7 +6,18 @@
                 <harper_tagger translate="title" module="harper_tagger">
                     <title>Order &amp; Customer Tags</title>
                     <sort_order>110</sort_order>
-                    <action>harper_tagger/adminhtml_tags</action>
+                    <children>
+                        <harper_tagger_tags translate="title" module="harper_tagger">
+                            <title>Tags</title>
+                            <sort_order>10</sort_order>
+                            <action>harper_tagger/adminhtml_tags</action>
+                        </harper_tagger_tags>
+                        <harper_tagger_rules translate="title" module="harper_tagger">
+                            <title>Rules</title>
+                            <sort_order>20</sort_order>
+                            <action>harper_tagger/adminhtml_rules</action>
+                        </harper_tagger_rules>
+                    </children>
                 </harper_tagger>
             </children>
         </sales>

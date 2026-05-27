@@ -75,6 +75,16 @@
                     </harper_tagger_order_save>
                 </observers>
             </sales_order_save_after>
+
+            <core_block_abstract_prepare_layout_after>
+                <observers>
+                    <harper_tagger_grid_columns>
+                        <type>singleton</type>
+                        <class>HarperAgency_OrderCustomerTagger_Model_Observer</class>
+                        <method>onBlockPrepareLayoutAfter</method>
+                    </harper_tagger_grid_columns>
+                </observers>
+            </core_block_abstract_prepare_layout_after>
         </events>
     </global>
 

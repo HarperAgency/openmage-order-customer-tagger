@@ -62,10 +62,11 @@ Copy the `app/` directory to your OpenMage root and flush the cache.
 
 ## Usage
 
-1. Go to **Catalog → Order & Customer Tagger → Tags** — review the 14 seed tags or create your own
-2. Go to **Catalog → Order & Customer Tagger → Rules** → click **Add Rule**
-3. Set conditions, choose the tag to apply, and save
+1. Go to **Sales → Order & Customer Tags → Tags** — review the 14 seed tags or create your own
+2. Go to **Sales → Order & Customer Tags → Rules** → click **Add Rule**
+3. Set conditions (field / operator / value rows), choose the tag to apply, and save
 4. Place or update an order — matching tags are applied automatically
+5. Tags appear in the **Orders grid** and **Customers grid** as coloured badges
 
 ---
 

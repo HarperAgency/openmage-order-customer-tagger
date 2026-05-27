@@ -1,6 +1,8 @@
 <?xml version="1.0"?>
 <layout version="0.1.0">
 
+    <!-- ── Tags ────────────────────────────────────────────────────────────── -->
+
     <harper_tagger_adminhtml_tags_index>
         <reference name="content">
             <block type="harper_tagger/adminhtml_tags"
@@ -23,5 +25,30 @@
             </block>
         </reference>
     </harper_tagger_adminhtml_tags_edit>
+
+    <!-- ── Rules ───────────────────────────────────────────────────────────── -->
+
+    <harper_tagger_adminhtml_rules_index>
+        <reference name="content">
+            <block type="harper_tagger/adminhtml_rules"
+                   name="harper_tagger_rules" />
+        </reference>
+    </harper_tagger_adminhtml_rules_index>
+
+    <harper_tagger_adminhtml_rules_new>
+        <update handle="harper_tagger_adminhtml_rules_edit" />
+    </harper_tagger_adminhtml_rules_new>
+
+    <harper_tagger_adminhtml_rules_edit>
+        <update handle="editor" />
+        <reference name="content">
+            <block type="harper_tagger/adminhtml_rules_edit"
+                   name="harper_tagger_rules_edit">
+                <block type="harper_tagger/adminhtml_rules_edit_form"
+                       name="harper_tagger_rules_edit_form"
+                       as="form" />
+            </block>
+        </reference>
+    </harper_tagger_adminhtml_rules_edit>
 
 </layout>

@@ -160,6 +160,46 @@ class HarperAgency_OrderCustomerTagger_Model_Observer
         }
     }
 
+    // ── Admin grid columns ────────────────────────────────────────────────────
+
+    /**
+     * Inject a Tags column into the sales orders grid and the customers grid.
+     * Fired by the core_block_abstract_prepare_layout_after event.
+     *
+     * @param  Varien_Event_Observer $observer
+     * @return void
+     */
+    public function onBlockPrepareLayoutAfter(Varien_Event_Observer $observer)
+    {
+        $block = $observer->getEvent()->getBlock();
+
+        if ($block instanceof Mage_Adminhtml_Block_Sales_Order_Grid) {
+            $block->addColumnAfter('harper_tags', array(
+                'header'      => Mage::helper('harper_tagger')->__('Tags'),
+                'align'       => 'left',
+                'index'       => 'entity_id',
+                'filter'      => false,
+                'sortable'    => false,
+                'renderer'    => 'HarperAgency_OrderCustomerTagger_Block_Adminhtml_Renderer_TagsList',
+                'entity_type' => 'order',
+                'width'       => '160px',
+            ), 'grand_total');
+        }
+
+        if ($block instanceof Mage_Adminhtml_Block_Customer_Grid) {
+            $block->addColumnAfter('harper_tags', array(
+                'header'      => Mage::helper('harper_tagger')->__('Tags'),
+                'align'       => 'left',
+                'index'       => 'entity_id',
+                'filter'      => false,
+                'sortable'    => false,
+                'renderer'    => 'HarperAgency_OrderCustomerTagger_Block_Adminhtml_Renderer_TagsList',
+                'entity_type' => 'customer',
+                'width'       => '160px',
+            ), 'email');
+        }
+    }
+
     /**
      * Insert customer-tag associations, ignoring duplicates.
      *

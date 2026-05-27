@@ -68,4 +68,43 @@ class HarperAgency_OrderCustomerTagger_Helper_Data extends Mage_Core_Helper_Abst
         }
         return $result;
     }
+
+    /**
+     * Return all Tag models applied to an order or customer.
+     * Used by the grid column renderer.
+     *
+     * @param  string $entityType  'order' or 'customer'
+     * @param  int    $entityId
+     * @return HarperAgency_OrderCustomerTagger_Model_Tag[]
+     */
+    public function getTagsForEntity($entityType, $entityId)
+    {
+        $entityId = (int) $entityId;
+        if ($entityId <= 0) {
+            return array();
+        }
+
+        if ($entityType === 'order') {
+            $assocModel  = 'harper_tagger/order_tag';
+            $filterField = 'order_id';
+        } else {
+            $assocModel  = 'harper_tagger/customer_tag';
+            $filterField = 'customer_id';
+        }
+
+        $assocCollection = Mage::getModel($assocModel)->getCollection();
+        $assocCollection->addFieldToFilter($filterField, $entityId);
+
+        $tags = array();
+        foreach ($assocCollection as $assoc) {
+            $tagId = (int) $assoc->getTagId();
+            if ($tagId > 0) {
+                $tag = Mage::getModel('harper_tagger/tag')->load($tagId);
+                if ($tag->getId()) {
+                    $tags[] = $tag;
+                }
+            }
+        }
+        return $tags;
+    }
 }
