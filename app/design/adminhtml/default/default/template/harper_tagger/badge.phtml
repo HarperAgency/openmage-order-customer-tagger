@@ -1,0 +1,18 @@
+<?php
+/**
+ * Inline badge template — renders a colour pill for a single tag.
+ *
+ * Variables expected (set on the block via setTag($tagModel)):
+ *   $this->getTag()  → HarperAgency_OrderCustomerTagger_Model_Tag
+ */
+$tag   = $this->getTag();
+$name  = $tag ? $this->htmlEscape($tag->getName()) : '';
+$color = $tag ? $this->htmlEscape($tag->getColor()) : '#3788d8';
+if (!$color) {
+    $color = '#3788d8';
+}
+?>
+<span class="harper-tagger-badge"
+      style="display:inline-block;padding:2px 10px;border-radius:12px;background-color:<?php echo $color; ?>;color:#fff;font-size:11px;font-weight:bold;">
+    <?php echo $name; ?>
+</span>

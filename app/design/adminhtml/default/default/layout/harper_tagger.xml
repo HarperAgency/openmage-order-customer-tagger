@@ -1,0 +1,27 @@
+<?xml version="1.0"?>
+<layout version="0.1.0">
+
+    <harper_tagger_adminhtml_tags_index>
+        <reference name="content">
+            <block type="harper_tagger/adminhtml_tags"
+                   name="harper_tagger_tags" />
+        </reference>
+    </harper_tagger_adminhtml_tags_index>
+
+    <harper_tagger_adminhtml_tags_new>
+        <update handle="harper_tagger_adminhtml_tags_edit" />
+    </harper_tagger_adminhtml_tags_new>
+
+    <harper_tagger_adminhtml_tags_edit>
+        <update handle="editor" />
+        <reference name="content">
+            <block type="harper_tagger/adminhtml_tags_edit"
+                   name="harper_tagger_tags_edit">
+                <block type="harper_tagger/adminhtml_tags_edit_form"
+                       name="harper_tagger_tags_edit_form"
+                       as="form" />
+            </block>
+        </reference>
+    </harper_tagger_adminhtml_tags_edit>
+
+</layout>

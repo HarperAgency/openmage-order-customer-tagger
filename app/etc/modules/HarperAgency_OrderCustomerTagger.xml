@@ -1,0 +1,9 @@
+<?xml version="1.0"?>
+<config>
+    <modules>
+        <HarperAgency_OrderCustomerTagger>
+            <active>true</active>
+            <codePool>community</codePool>
+        </HarperAgency_OrderCustomerTagger>
+    </modules>
+</config>

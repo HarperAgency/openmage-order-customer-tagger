@@ -1,0 +1,102 @@
+<?xml version="1.0"?>
+<config>
+    <modules>
+        <HarperAgency_OrderCustomerTagger>
+            <version>1.0.0</version>
+        </HarperAgency_OrderCustomerTagger>
+    </modules>
+
+    <global>
+        <blocks>
+            <harper_tagger>
+                <class>HarperAgency_OrderCustomerTagger_Block</class>
+            </harper_tagger>
+        </blocks>
+
+        <helpers>
+            <harper_tagger>
+                <class>HarperAgency_OrderCustomerTagger_Helper</class>
+            </harper_tagger>
+        </helpers>
+
+        <models>
+            <harper_tagger>
+                <class>HarperAgency_OrderCustomerTagger_Model</class>
+                <resourceModel>harper_tagger_resource</resourceModel>
+            </harper_tagger>
+            <harper_tagger_resource>
+                <class>HarperAgency_OrderCustomerTagger_Model_Resource</class>
+                <entities>
+                    <tag>
+                        <table>harper_tagger_tags</table>
+                    </tag>
+                    <rule>
+                        <table>harper_tagger_rules</table>
+                    </rule>
+                    <order_tag>
+                        <table>harper_tagger_order_tags</table>
+                    </order_tag>
+                    <customer_tag>
+                        <table>harper_tagger_customer_tags</table>
+                    </customer_tag>
+                </entities>
+            </harper_tagger_resource>
+        </models>
+
+        <resources>
+            <harper_tagger_setup>
+                <setup>
+                    <module>HarperAgency_OrderCustomerTagger</module>
+                    <class>Mage_Core_Model_Resource_Setup</class>
+                </setup>
+                <connection>
+                    <use>core_setup</use>
+                </connection>
+            </harper_tagger_setup>
+            <harper_tagger_write>
+                <connection>
+                    <use>core_write</use>
+                </connection>
+            </harper_tagger_write>
+            <harper_tagger_read>
+                <connection>
+                    <use>core_read</use>
+                </connection>
+            </harper_tagger_read>
+        </resources>
+
+        <events>
+            <sales_order_save_after>
+                <observers>
+                    <harper_tagger_order_save>
+                        <type>singleton</type>
+                        <class>HarperAgency_OrderCustomerTagger_Model_Observer</class>
+                        <method>onOrderSaveAfter</method>
+                    </harper_tagger_order_save>
+                </observers>
+            </sales_order_save_after>
+        </events>
+    </global>
+
+    <admin>
+        <routers>
+            <harper_tagger>
+                <use>admin</use>
+                <args>
+                    <module>HarperAgency_OrderCustomerTagger</module>
+                    <frontName>harper_tagger</frontName>
+                </args>
+            </harper_tagger>
+        </routers>
+    </admin>
+
+    <adminhtml>
+        <layout>
+            <updates>
+                <harper_tagger>
+                    <file>harper_tagger.xml</file>
+                </harper_tagger>
+            </updates>
+        </layout>
+    </adminhtml>
+</config>

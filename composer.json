@@ -1,0 +1,24 @@
+{
+    "name": "harperagency/openmage-order-customer-tagger",
+    "description": "OpenMage (Magento 1) Order & Customer Tagger — rule-based tagging engine",
+    "type": "magento-module",
+    "license": "proprietary",
+    "require": {
+        "php": ">=7.4",
+        "harperagency/rule-engine": "@dev"
+    },
+    "repositories": [
+        {
+            "type": "path",
+            "url": "../harper-rule-engine"
+        }
+    ],
+    "autoload": {
+        "psr-4": {
+            "HarperAgency\\OMTagger\\": "app/code/community/HarperAgency/OrderCustomerTagger/"
+        }
+    },
+    "require-dev": {
+        "phpunit/phpunit": "^10.0"
+    }
+}
