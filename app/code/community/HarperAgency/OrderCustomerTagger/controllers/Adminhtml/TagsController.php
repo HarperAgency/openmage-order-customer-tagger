@@ -92,6 +92,11 @@ class HarperAgency_OrderCustomerTagger_Adminhtml_TagsController
 
     public function saveAction()
     {
+        if (!$this->_validateFormKey()) {
+            $this->_redirect('*/*/');
+            return;
+        }
+
         $data = $this->getRequest()->getPost();
         if (!$data) {
             Mage::getSingleton('adminhtml/session')
