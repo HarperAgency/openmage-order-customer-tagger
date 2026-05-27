@@ -1,7 +1,7 @@
 # Harper Order & Customer Tagger — OpenMage Human QA Checklist v1.0
 
-**Test site:** _(OpenMage dev site — TBD, install required)_
-**Admin URL:** `{site}/index.php/admin`
+**Test site:** https://harperservice.tech/openmage.dev/
+**Admin URL:** https://harperservice.tech/openmage.dev/index.php/admin/
 **Module version:** 1.0.0
 **Date tested:** _______________
 **Tester:** _______________
@@ -15,7 +15,9 @@
 
 ## Before You Start
 
-- [ ] Log into the OpenMage admin
+**Login:** `harperadmin` / `Harper@Mage2026!`
+
+- [ ] Log into the OpenMage admin at the URL above
 - [ ] Confirm module is active: **System → Configuration → Advanced → Advanced** → `HarperAgency_OrderCustomerTagger` = Enable
 - [ ] Run setup scripts if first install: navigate to any admin page and check that `harper_tagger_*` tables exist in the DB (4 tables: tags, rules, order_tags, customer_tags)
 - [ ] Confirm 14 seed tags are present: **Sales → Order & Customer Tags → Tags**
