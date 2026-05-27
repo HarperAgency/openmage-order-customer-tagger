@@ -160,10 +160,13 @@ class HarperAgency_OrderCustomerTagger_Model_Observer
         }
     }
 
-    // ── Admin grid columns ────────────────────────────────────────────────────
+    // ── Admin grid columns + filters ─────────────────────────────────────────
 
     /**
-     * Inject a Tags column into the sales orders grid and the customers grid.
+     * Inject a Tags column (with filter dropdown) into the sales orders grid
+     * and the customers grid.  Also adds a "Re-run Tagger Rules" mass action
+     * on the orders grid.
+     *
      * Fired by the core_block_abstract_prepare_layout_after event.
      *
      * @param  Varien_Event_Observer $observer
@@ -174,30 +177,131 @@ class HarperAgency_OrderCustomerTagger_Model_Observer
         $block = $observer->getEvent()->getBlock();
 
         if ($block instanceof Mage_Adminhtml_Block_Sales_Order_Grid) {
+            $tagOptions = $this->_buildTagOptions('order');
+
             $block->addColumnAfter('harper_tags', array(
-                'header'      => Mage::helper('harper_tagger')->__('Tags'),
-                'align'       => 'left',
-                'index'       => 'entity_id',
-                'filter'      => false,
-                'sortable'    => false,
-                'renderer'    => 'HarperAgency_OrderCustomerTagger_Block_Adminhtml_Renderer_TagsList',
-                'entity_type' => 'order',
-                'width'       => '160px',
+                'header'                    => Mage::helper('harper_tagger')->__('Tags'),
+                'align'                     => 'left',
+                'index'                     => 'entity_id',
+                'type'                      => 'options',
+                'options'                   => $tagOptions,
+                'sortable'                  => false,
+                'renderer'                  => 'HarperAgency_OrderCustomerTagger_Block_Adminhtml_Renderer_TagsList',
+                'entity_type'               => 'order',
+                'width'                     => '160px',
+                'filter_condition_callback' => array($this, 'filterOrdersByTag'),
             ), 'grand_total');
+
+            // Mass action: re-run rules on selected orders
+            $block->getMassactionBlock()->addItem('harper_rerun_rules', array(
+                'label'   => Mage::helper('harper_tagger')->__('Re-run Tagger Rules'),
+                'url'     => Mage::helper('adminhtml')->getUrl('harper_tagger/adminhtml_orders/massRerunRules'),
+                'confirm' => Mage::helper('harper_tagger')->__('Re-run tagger rules on selected orders?'),
+            ));
         }
 
         if ($block instanceof Mage_Adminhtml_Block_Customer_Grid) {
+            $tagOptions = $this->_buildTagOptions('customer');
+
             $block->addColumnAfter('harper_tags', array(
-                'header'      => Mage::helper('harper_tagger')->__('Tags'),
-                'align'       => 'left',
-                'index'       => 'entity_id',
-                'filter'      => false,
-                'sortable'    => false,
-                'renderer'    => 'HarperAgency_OrderCustomerTagger_Block_Adminhtml_Renderer_TagsList',
-                'entity_type' => 'customer',
-                'width'       => '160px',
+                'header'                    => Mage::helper('harper_tagger')->__('Tags'),
+                'align'                     => 'left',
+                'index'                     => 'entity_id',
+                'type'                      => 'options',
+                'options'                   => $tagOptions,
+                'sortable'                  => false,
+                'renderer'                  => 'HarperAgency_OrderCustomerTagger_Block_Adminhtml_Renderer_TagsList',
+                'entity_type'               => 'customer',
+                'width'                     => '160px',
+                'filter_condition_callback' => array($this, 'filterCustomersByTag'),
             ), 'email');
         }
+    }
+
+    /**
+     * Filter condition callback for the Tags column on the orders grid.
+     * Adds an EXISTS subquery when a tag filter value is selected.
+     *
+     * @param  Mage_Sales_Model_Resource_Order_Grid_Collection $collection
+     * @param  Mage_Adminhtml_Block_Widget_Grid_Column         $column
+     * @return $this
+     */
+    public function filterOrdersByTag($collection, $column)
+    {
+        $tagId = (int) $column->getFilter()->getValue();
+        if (!$tagId) {
+            return $this;
+        }
+
+        $tableName = Mage::getSingleton('core/resource')
+            ->getTableName('harper_tagger/order_tag');
+
+        $collection->getSelect()->where(
+            'EXISTS (SELECT 1 FROM `' . $tableName . '` ht'
+            . ' WHERE ht.order_id = main_table.entity_id'
+            . ' AND ht.tag_id = ' . $tagId . ')'
+        );
+
+        return $this;
+    }
+
+    /**
+     * Filter condition callback for the Tags column on the customers grid.
+     *
+     * @param  Mage_Customer_Model_Resource_Customer_Collection $collection
+     * @param  Mage_Adminhtml_Block_Widget_Grid_Column          $column
+     * @return $this
+     */
+    public function filterCustomersByTag($collection, $column)
+    {
+        $tagId = (int) $column->getFilter()->getValue();
+        if (!$tagId) {
+            return $this;
+        }
+
+        $tableName = Mage::getSingleton('core/resource')
+            ->getTableName('harper_tagger/customer_tag');
+
+        $collection->getSelect()->where(
+            'EXISTS (SELECT 1 FROM `' . $tableName . '` ht'
+            . ' WHERE ht.customer_id = main_table.entity_id'
+            . ' AND ht.tag_id = ' . $tagId . ')'
+        );
+
+        return $this;
+    }
+
+    /**
+     * Public wrapper so the Orders mass-action controller can re-use
+     * the processing pipeline without duplicating logic.
+     *
+     * @param  Mage_Sales_Model_Order $order
+     * @return void
+     */
+    public function processOrder(Mage_Sales_Model_Order $order)
+    {
+        HarperAgency_OrderCustomerTagger_Helper_Data::loadAutoloader();
+        $this->_processOrder($order);
+    }
+
+    // ── Private helpers ───────────────────────────────────────────────────────
+
+    /**
+     * Build an options array for the grid filter select.
+     *
+     * @param  string $type  'order' or 'customer'
+     * @return array<int|string, string>
+     */
+    protected function _buildTagOptions($type)
+    {
+        $options    = array('' => Mage::helper('harper_tagger')->__('-- Any --'));
+        $collection = Mage::getModel('harper_tagger/tag')->getCollection();
+        $collection->addFieldToFilter('type', $type);
+        $collection->setOrder('name', 'ASC');
+        foreach ($collection as $tag) {
+            $options[(int) $tag->getId()] = $tag->getName();
+        }
+        return $options;
     }
 
     /**
