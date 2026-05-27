@@ -73,19 +73,46 @@ if (!class_exists('Mage')) {
             if (isset(self::$_models[$alias])) {
                 return self::$_models[$alias];
             }
-            // Return a generic stub for unregistered model aliases so that
-            // calling getCollection() on them doesn't crash.
-            return new class($alias) {
+            // Return a stub model that supports load($id) with per-id registry lookup
+            return new class($alias) extends Varien_Object {
                 private $alias;
-                public function __construct($alias) { $this->alias = $alias; }
-                public function getCollection() { return new StubCollection(); }
-                public function load($id) { return $this; }
-                public function getId() { return null; }
-                public function getSlug() { return ''; }
-                public function getType() { return ''; }
-                public function getName() { return ''; }
-                public function getColor() { return ''; }
-                public function getCreatedAt() { return ''; }
+                public function __construct($a) { parent::__construct(); $this->alias = $a; }
+                public function getCollection() {
+                    // Check collection stubs registry
+                    $map = Mage::registry('__collection_stubs') ?: array();
+                    return $map[$this->alias] ?? new StubCollection();
+                }
+                public function load($id) {
+                    // Check per-id model registry
+                    $map = Mage::registry('__model_by_id') ?: array();
+                    $key = "{$this->alias}:{$id}";
+                    if (isset($map[$key])) {
+                        // Copy data from registered stub into this instance
+                        $stub = $map[$key];
+                        if (method_exists($stub, 'getData')) {
+                            $this->setData($stub->getData());
+                        }
+                    }
+                    return $this;
+                }
+                public function getId()        { return $this->getData('id'); }
+                public function getSlug()      { return (string) $this->getData('slug'); }
+                public function getType()      { return (string) $this->getData('type'); }
+                public function getName()      { return (string) $this->getData('name'); }
+                public function getColor()     { return (string) $this->getData('color'); }
+                public function getCreatedAt() { return (string) $this->getData('created_at'); }
+                public function getConditionsArray() {
+                    $raw = $this->getData('conditions');
+                    if (is_array($raw)) return $raw;
+                    return json_decode((string)($raw ?? '[]'), true) ?: array();
+                }
+                public function getTagId()    { return (int) $this->getData('tag_id'); }
+                public function getOperator() { return (string) ($this->getData('operator') ?: 'AND'); }
+                public function save()        {
+                    $cbs = Mage::registry('__save_callbacks') ?: array();
+                    if (isset($cbs[$this->alias])) { ($cbs[$this->alias])(); }
+                    return $this;
+                }
             };
         }
 
@@ -195,6 +222,25 @@ if (!class_exists('Mage_Core_Model_Abstract')) {
             return $this;
         }
 
+        public function getCollection()
+        {
+            return new StubCollection();
+        }
+
+        public function getTagId()    { return (int) $this->getData('tag_id'); }
+        public function getOperator() { return (string) ($this->getData('operator') ?: 'AND'); }
+        public function getType()     { return (string) $this->getData('type'); }
+
+        /**
+         * Decode JSON-encoded conditions stored under 'conditions' key.
+         */
+        public function getConditionsArray(): array
+        {
+            $raw = $this->getData('conditions');
+            if (is_array($raw)) return $raw;
+            return json_decode((string)($raw ?? '[]'), true) ?: [];
+        }
+
         protected function _construct() {}
     }
 }
@@ -256,7 +302,111 @@ if (!class_exists('Mage_Sales_Model_Order_Payment')) {
     }
 }
 
-// ── Load module ContextBuilder ────────────────────────────────────────────────
+// ── Mage_Core_Helper_Abstract stub ───────────────────────────────────────────
+
+if (!class_exists('Mage_Core_Helper_Abstract')) {
+    class Mage_Core_Helper_Abstract
+    {
+        public function __($text) { return $text; }
+    }
+}
+
+// ── Varien_Event and Varien_Event_Observer stubs ──────────────────────────────
+
+if (!class_exists('Varien_Event')) {
+    class Varien_Event extends Varien_Object
+    {
+        public function getOrder() { return $this->getData('order'); }
+        public function setOrder($order) { $this->setData('order', $order); return $this; }
+    }
+}
+
+if (!class_exists('Varien_Event_Observer')) {
+    class Varien_Event_Observer extends Varien_Object
+    {
+        private $_event;
+        public function __construct() { $this->_event = new Varien_Event(); }
+        public function getEvent() { return $this->_event; }
+    }
+}
+
+// ── Extended Mage stub helpers for Observer tests ─────────────────────────────
+
+// Allow registering a specific model instance keyed by alias+id
+// and registering collection stubs with save callbacks.
+if (!method_exists('Mage', 'registerModel')) {
+    class_alias('Mage', 'MageBase_DoNotUse');
+}
+
+// Patch Mage::getModel() to support per-id lookup and save callbacks
+// We do this by storing extra maps in the static registry.
+Mage::register('__model_by_id', array());
+Mage::register('__save_callbacks', array());
+Mage::register('__collection_stubs', array());
+
+// ── Helper functions used in ObserverTest ─────────────────────────────────────
+
+if (!function_exists('Mage_registerModel')) {
+    /** Register a specific model instance returned when getModel($alias)->load($id). */
+    function Mage_registerModel_byId(string $alias, object $obj, int $id): void {
+        // Store in registry map
+        $map = Mage::registry('__model_by_id') ?: array();
+        $map["{$alias}:{$id}"] = $obj;
+        Mage::register('__model_by_id', $map);
+    }
+}
+
+// Extend Mage with registerModel convenience — add directly to existing class via registry
+Mage::register('_registerModel_fn', function(string $alias, object $obj, int $id) {
+    $map = Mage::registry('__model_by_id') ?: array();
+    $map["{$alias}:{$id}"] = $obj;
+    Mage::register('__model_by_id', $map);
+});
+
+Mage::register('_registerCollection_fn', function(string $alias, StubCollection $col) {
+    $map = Mage::registry('__collection_stubs') ?: array();
+    $map[$alias] = $col;
+    Mage::register('__collection_stubs', $map);
+});
+
+Mage::register('_registerSaveCallback_fn', function(string $alias, callable $cb) {
+    $map = Mage::registry('__save_callbacks') ?: array();
+    $map[$alias] = $cb;
+    Mage::register('__save_callbacks', $map);
+});
+
+// Provide global convenience functions for tests
+function mage_test_register_model(string $alias, object $obj, int $id): void {
+    $fn = Mage::registry('_registerModel_fn');
+    $fn($alias, $obj, $id);
+}
+function mage_test_register_collection(string $alias, StubCollection $col): void {
+    $fn = Mage::registry('_registerCollection_fn');
+    $fn($alias, $col);
+}
+
+// ── Helper for Observer: Rule model getConditionsArray() ──────────────────────
+
+if (!class_exists('Mage_Core_Model_Abstract') || !method_exists('Mage_Core_Model_Abstract', 'getConditionsArray')) {
+    // Extend with a conditions helper used by Observer._buildRuleObjects
+}
+
+// ── Load module classes ───────────────────────────────────────────────────────
 
 require_once dirname(__DIR__)
     . '/app/code/community/HarperAgency/OrderCustomerTagger/Model/RuleEngine/ContextBuilder.php';
+
+require_once dirname(__DIR__)
+    . '/app/code/community/HarperAgency/OrderCustomerTagger/Model/Observer.php';
+
+require_once dirname(__DIR__)
+    . '/app/code/community/HarperAgency/OrderCustomerTagger/Model/Tag.php';
+
+require_once dirname(__DIR__)
+    . '/app/code/community/HarperAgency/OrderCustomerTagger/Model/OrderTag.php';
+
+require_once dirname(__DIR__)
+    . '/app/code/community/HarperAgency/OrderCustomerTagger/Model/CustomerTag.php';
+
+require_once dirname(__DIR__)
+    . '/app/code/community/HarperAgency/OrderCustomerTagger/Helper/Data.php';

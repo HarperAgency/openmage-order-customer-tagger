@@ -1,0 +1,36 @@
+name: Tests
+
+on:
+  push:
+    branches: [ main, master, trunk ]
+  pull_request:
+    branches: [ main, master, trunk ]
+
+jobs:
+  # ── Unit tests ──────────────────────────────────────────────────────────────
+  unit:
+    name: Unit Tests (PHP ${{ matrix.php }})
+    runs-on: ubuntu-latest
+
+    strategy:
+      matrix:
+        php: [ '7.4', '8.0', '8.1', '8.2' ]
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: false
+
+      - name: Set up PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: ${{ matrix.php }}
+          coverage: none
+
+      - name: Install dependencies
+        run: composer install --no-interaction --prefer-dist
+        # Note: uses path repository ../harper-rule-engine in dev;
+        # in CI the rule-engine source is bundled via the repo itself.
+
+      - name: Run unit tests
+        run: php vendor/bin/phpunit --configuration tests/phpunit.xml
